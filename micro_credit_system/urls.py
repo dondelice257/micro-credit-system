@@ -1,5 +1,5 @@
 """
-URL configuration for micro_credit_system project.
+URL configuration for mfasha_api project.
 
 The `urlpatterns` list routes URLs to views. For more information please see:
     https://docs.djangoproject.com/en/4.2/topics/http/urls/
@@ -16,7 +16,23 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
+from django.urls import path, include
+from rest_framework.authtoken.views import obtain_auth_token
+from . import settings
+from django.conf.urls.static import static
+
+
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('api/user/', include("apps.authentication.urls"), name='authentication'),  
+    path('api/login/', obtain_auth_token, name='obtain_auth_token'),
+    
+    
+     
+    
+    
 ]
+
+if settings.DEBUG or settings.DEBUG==False:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
