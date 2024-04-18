@@ -1,6 +1,7 @@
+from django.utils import timezone
 from django.db import models
-
 from apps.authentication.models import User
+import datetime
 
 
 class MicroCredit(models.Model):
@@ -12,6 +13,7 @@ class MicroCredit(models.Model):
         ('REJECTED', 'Rejected'),
     ]
 
+    # Define model fields
     amount = models.FloatField()
     holder = models.ForeignKey(
         User,
@@ -107,6 +109,62 @@ class MicroCredit(models.Model):
         default='INITIAL'
     )
 
+
+
+    # Update credit status and financial details
+    def pay_credit(self):
+        if self.status == 'PENDING':
+            self.status = 'PAID'
+            self.paid_amount = self.total_amount
+            self.remaining_amount = 0.0
+            self.paid_capital = self.amount
+            self.paid_interests = self.interest_amount
+            self.remaining_capital = 0.0
+            self.remaining_interests = 0.0
+            self.save()
+        elif self.status == 'INITIAL':
+            raise ValueError('Cannot pay the credit with the initial status')
+        elif self.status == 'REJECTED':
+            raise ValueError('Cannot pay the credit with the rejected status')
+        elif self.status == 'CANCELLED':
+            raise ValueError('Cannot pay the credit with the cancelled status')
+        elif self.status == 'PAID':
+            raise ValueError('This credit has already been paid')
+        else:
+            raise ValueError('Cannot pay this credit, please contact the admin for more information')
+
+
+
+    def approve_credit(self):
+        # Update credit status to approved and add time
+        if self.status == 'INITIAL':
+
+            self.status = 'PENDING'
+            self.approved_at = timezone.now()
+            self.save()
+        else:
+            raise ValueError('The credit must have the initial status to be approved')
+
+    def reject_credit(self):
+        # Update credit status to rejected and add time
+        if self.status == 'INITIAL':
+            self.status = 'REJECTED'
+            self.rejected_at = timezone.now()
+            self.save()
+        else:
+            raise ValueError('The credit must have the initial status to be rejected')
+
+    def cancel_credit(self):
+        # Update credit status to cancelled and add time
+        if self.status == 'PENDING':
+            self.status = 'CANCELLED'
+            self.cancelled_at = timezone.now()
+            self.save()
+        else:
+            raise ValueError('The credit must have the pending status to be cancelled')
+
+
+    # Override save method to handle calculations and validations
     def save(self, *args, **kwargs):
 
         if self.amount and self.interest_rate:
@@ -129,5 +187,24 @@ class MicroCredit(models.Model):
         # Calculate remaining capital whenever paid capital changes
         if self.paid_capital is not None:
             self.remaining_capital = self.amount - self.paid_capital
+
+        if self.expiration_date:
+            # Convert expiration_date to a datetime object for comparison
+            expiration_datetime = datetime.datetime.combine(self.expiration_date, datetime.time.min)
+            expiration_datetime = timezone.make_aware(expiration_datetime, timezone.get_current_timezone())
+
+
+            if expiration_datetime >= timezone.now():
+                # Check if penalties_rate is not None before using it
+                if self.penalties_rate is not None:
+                    self.penalties_amount = self.amount * (self.penalties_rate / 100)
+
+                else:
+                    self.penalties_amount = 0.0
+            else:
+                self.penalties_amount = 0.0
+        else:
+            self.penalties_amount = 0.0
+
 
         super().save(*args, **kwargs)
