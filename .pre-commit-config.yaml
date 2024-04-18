@@ -1,0 +1,66 @@
+
+default_language_version:
+    python: python3
+fail_fast: true
+default_stages: [commit]
+repos:
+#  - repo: local
+#    hooks:
+#      - id: custom-script-sh
+#        name: custom-script-sh
+#        entry: run_compile_modules.sh
+#        language: script
+#        always_run: true
+#        pass_filenames: false
+#        stages: [push]
+  - repo: git@github.com:pre-commit/pre-commit-hooks.git
+    rev: v4.4.0
+    hooks:
+    - id: trailing-whitespace
+    - id: end-of-file-fixer
+    - id: check-yaml
+    - id: debug-statements
+    - id: detect-private-key
+    - id: check-merge-conflict
+    - id: check-added-large-files
+    - id: check-case-conflict
+    - id: check-docstring-first
+
+
+
+  - repo: git@github.com:PyCQA/bandit.git
+    rev: 1.7.8
+    hooks:
+      - id: bandit
+
+  - repo: git@github.com:asottile/pyupgrade.git
+    rev: v3.3.1
+    hooks:
+    - id: pyupgrade
+      args: [--py39-plus]
+
+  - repo: git@github.com:ikamensh/flynt.git
+    rev: '0.78'
+    hooks:
+    - id: flynt
+
+  - repo: git@github.com:PyCQA/flake8.git
+    rev: 6.0.0
+    hooks:
+    - id: flake8
+      exclude: (tests|doc)
+      additional_dependencies:
+        - flake8-bugbear
+        - flake8-comprehensions
+        - flake8-no-pep420
+        - flake8-tidy-imports
+
+  - repo: git@github.com:PyCQA/isort.git
+    rev: 5.12.0
+    hooks:
+    - id: isort
+      name: isort (python)
+  - repo: git@github.com:detailyang/pre-commit-shell.git
+    rev: v1.0.6
+    hooks:
+    - id: shell-lint
